@@ -120,9 +120,7 @@ search against that collection and feed the retrieved chunks to the LLM as conte
    QDRANT_API_KEY=your_qdrant_api_key      # omit/leave blank for a local Qdrant instance
    QDRANT_URL=your_qdrant_url              # e.g. http://localhost:6333 for local
    ```
-   ⚠️ See **Security note** below — an old commit in this repo's history
-   still has real-looking keys from a previous `.env`. Use your own keys, and
-   don't re-commit `.env` (it's now git-ignored).
+   Use your own keys, and don't re-commit `.env` (it's now git-ignored).
 
 ## Running the demo
 
@@ -260,64 +258,3 @@ These are known, unresolved gaps — fixable, but not done yet:
 - Make chunk size, top-k search results, and collection name configurable
   instead of hard-coded.
 
-## Security note
-
-`.env` has been removed from git tracking (`git rm --cached .env`) and a
-`.gitignore` now excludes it going forward. The file still exists locally
-(and you have a separate backup) for local development — just don't `git
-add -f` it back in.
-
-**This does not remove the credentials from git history.** History has not
-been rewritten, so the original commit (`41e8afb`) still contains the old
-`.env` contents with what appear to be live Groq and Qdrant keys — anyone
-with a copy of this repo's history (including this local clone, or any
-existing GitHub remote/fork) can still retrieve them with
-`git show 41e8afb:.env`. Untracking the file only stops *new* commits from
-including it.
-
-Given that, before doing anything else with this project:
-- **Rotate/revoke the Groq and Qdrant keys that were in that commit.** This
-  is the only step that actually closes the exposure — it doesn't matter
-  whether history is rewritten if the old keys are dead.
-- Generate new keys and put them in the (now-untracked) local `.env`.
-- If there's an existing GitHub remote for this repo, treat any key that was
-  ever pushed to it as compromised, rotated keys or not — until it's deleted
-  or its history is scrubbed.
-
-See **Creating a new repository** below for how to carry this project
-forward without dragging that leaked commit along.
-
-## Creating a new repository
-
-Since history here still contains the old `.env` commit, the simplest clean
-path is to start the new repo with fresh history rather than pushing this
-one's history (or a rewritten copy of it) to a new remote.
-
-1. **Rotate the keys first** (see above) — do this regardless of anything below.
-2. **Create the new remote repo** on GitHub (or wherever), empty, no template files.
-3. **From this project directory, re-initialize git history:**
-   ```bash
-   rm -rf .git
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-   This drops the old commit (and the leaked `.env` blob) entirely instead of
-   carrying it forward — `.env` is already git-ignored, so it won't be
-   included in the new history.
-4. **Point at the new remote and push:**
-   ```bash
-   git remote add origin <new-repo-url>
-   git branch -M main
-   git push -u origin main
-   ```
-5. **Recreate a `dev` branch if you use one:**
-   ```bash
-   git checkout -b dev
-   git push -u origin dev
-   ```
-6. **Retire the old repo/remote** — delete the old GitHub repo (or at least
-   its exposed branches) once the new one is up, since its history still has
-   the leaked commit regardless of what happens here locally.
-7. Double-check `git status` shows `.env` as untracked/ignored in the new
-   repo before your first push, and confirm no other secrets are staged.
